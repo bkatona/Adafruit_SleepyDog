@@ -201,7 +201,6 @@ int WatchdogSAMD::sleep(int maxPeriodMS) {
   // Insights from Atmel ASF library.
 #if (SAMD20 || SAMD21)
   // Don't fully power down flash when in sleep
-  SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;
   NVMCTRL->CTRLB.bit.SLEEPPRM = NVMCTRL_CTRLB_SLEEPPRM_DISABLED_Val;
 #endif
 #if defined(__SAMD51__)
@@ -210,7 +209,9 @@ int WatchdogSAMD::sleep(int maxPeriodMS) {
     ; // Wait for it to take
 #else
   SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
-#endif
+  SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk; //Hardware bug requires systick interrupt to be disabled.
+                                              //See Sleepydog https://github.com/adafruit/Adafruit_SleepyDog/pull/24/
+ #endif
 
   __DSB(); // Data sync to ensure outgoing memory accesses complete
   __WFI(); // Wait for interrupt (places device in sleep mode)
